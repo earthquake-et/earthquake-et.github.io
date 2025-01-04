@@ -413,8 +413,8 @@ const translations = {
         'Avoid windows and outer walls.' : 'መስኮቶችን እና ውጫዊ ግድግዳዎችን ያስወግዱ።',
         'Check for injuries and help others.' : 'ጉዳቶችን ይፈትሹ እና ሌሎችን ያግዙ።',
          'You are within the affected radius.' : 'እርስዎ በተጎዳው ራዲየስ ውስጥ ነዎት።',
-           'Enable Push Notifications' : 'የግፊት ማሳወቂያዎችን አንቃ',
-           'Disable Push Notifications': 'የግፊት ማሳወቂያዎችን አቦዝን'
+           'Enable Push Notifications' : 'መልዕክት ማሳወቂያ አብራ',
+           'Disable Push Notifications': 'መልዕክት ማሳወቂያ አጥፋ'
 
     },
     or: {
