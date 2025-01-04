@@ -9,6 +9,7 @@
   6. Show areas affected by seismic waves.
   7. Localization support for Amharic, Oromo, Tigrinya, and English.
   8. Safety instructions during alerts.
+  9. Separate containers for previous earthquakes and real-time events.
 */
 
 // Ethiopia's geographical boundaries
@@ -28,6 +29,10 @@ const loadingMessage = document.getElementById('loading-message');
 const alertSound = document.getElementById('alert-sound');
 const alertContainer = document.getElementById('alert-container');
 let isAlertActive = false;
+let earthquakeLayerGroup;
+let audioContext;
+const enableNotificationsButton = document.getElementById('enable-notifications-button');
+
 
 // Check if an earthquake is within Ethiopia
 function isInEthiopia(lat, lng) {
@@ -49,6 +54,7 @@ function initMap() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
     }).addTo(map);
+     earthquakeLayerGroup = L.layerGroup().addTo(map);
 }
 
 // Function to get user's real-time location
@@ -120,6 +126,8 @@ async function fetchEarthquakeData() {
 
 // Display earthquakes in Ethiopia and send alerts
 function displayEthiopianEarthquakes(earthquakes) {
+      // Clear existing markers and circles
+    earthquakeLayerGroup.clearLayers();
     const historyContainer = document.getElementById('previous-earthquake-container');
     const realtimeContainer = document.getElementById('realtime-earthquake-container');
 
@@ -142,12 +150,13 @@ function displayEthiopianEarthquakes(earthquakes) {
             const marker = L.circleMarker([lat, lng], {
                 radius: mag * 2,
                 color: 'red',
-            }).addTo(map);
-            marker.bindPopup(
+            });
+             marker.bindPopup(
                 `<b>Location:</b> ${place}<br><b>Magnitude:</b> ${mag}<br><b>Time:</b> ${new Date(
                     time
                 ).toLocaleString()}`
             );
+            earthquakeLayerGroup.addLayer(marker)
 
             // Add to historical list
             const historyItem = document.createElement('li');
@@ -178,11 +187,11 @@ function displayEthiopianEarthquakes(earthquakes) {
                   realtimeList.appendChild(realtimeItem);
                  if ((geolocationPermission === 'granted' || geolocationPermission === 'prompt') && isUserInRadius && timeUntilImpact > 0 && timeUntilImpact <= 60) {
                        if(!isAlertActive){
-                             markAffectedArea(lat, lng, mag);
-                             alertUser(place, mag, timeUntilImpact);
+                            markAffectedArea(lat, lng, mag);
+                            alertUser(place, mag, timeUntilImpact);
                          }
                     } else {
-                         markAffectedArea(lat, lng, mag, false);
+                           markAffectedArea(lat, lng, mag, false);
                         console.log("User is not within the radius or the time is out of range or they did not give geolocation access");
                     }
             }
@@ -201,7 +210,9 @@ function markAffectedArea(lat, lng, magnitude, isAlert = true) {
         radius: radius * 1000, // Convert to meters
     };
 
-    L.circle([lat, lng], circleOptions).addTo(map).bindPopup(`${translateText('Affected Area', currentLanguage)}: ${radius} km radius`);
+    const circle = L.circle([lat, lng], circleOptions)
+        .bindPopup(`${translateText('Affected Area', currentLanguage)}: ${radius} km radius`);
+        earthquakeLayerGroup.addLayer(circle);
 }
 
 // Calculate time until shaking starts
@@ -238,47 +249,74 @@ function alertUser(place, magnitude, timeUntilImpact) {
   console.log(fullMessage); // For debugging
     displayAlert(fullMessage);
     sendPushNotification(`${translateText('Earthquake Alert!', currentLanguage)}`, fullMessage);
-    playSound();
+     playSound();
 }
+
 
 // Push notification setup
 if ('serviceWorker' in navigator && 'PushManager' in window) {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
+    navigator.serviceWorker.register('sw.js').then((registration) => {
         console.log('Service Worker registered:', registration);
     });
 }
+
 //Request permission for push notifications
 function requestNotificationPermission() {
     if ('Notification' in window) {
-      Notification.requestPermission().then(permission => {
-        notificationPermission = permission;
-        if (permission === 'granted') {
-          console.log('Notification permission granted.');
-          // Optionally, you can subscribe the user to push notifications here
-        } else if (permission === 'denied') {
-           console.warn('Notification permission denied.');
-        } else {
-            console.log('Notification permission closed.');
-        }
-      });
+        Notification.requestPermission().then(permission => {
+            notificationPermission = permission;
+           updateButtonState();
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+            } else if (permission === 'denied') {
+                console.warn('Notification permission denied.');
+            } else {
+                console.log('Notification permission closed.');
+            }
+        });
     } else {
-      console.error('Notification API not supported.');
+        console.error('Notification API not supported.');
     }
-  }
-//Add an option for user to opt in to the push notifications, example usage
-document.addEventListener('DOMContentLoaded', function() {
-    const enableNotificationsButton = document.createElement('button');
-    enableNotificationsButton.textContent = 'Enable Push Notifications';
-    enableNotificationsButton.addEventListener('click', requestNotificationPermission);
-    document.body.appendChild(enableNotificationsButton);
-  });
+}
+
+
+ function updateButtonState() {
+    if (notificationPermission === 'granted') {
+      enableNotificationsButton.innerHTML = `${translateText('Disable Push Notifications', currentLanguage)} <i class="fa-solid fa-bell-slash"></i>`;
+        enableNotificationsButton.style.backgroundColor = '#d9534f'; // Red for disable
+    } else {
+         enableNotificationsButton.innerHTML = `${translateText('Enable Push Notifications', currentLanguage)}  <i class="fa-solid fa-bell"></i>`;
+        enableNotificationsButton.style.backgroundColor = '#5cb85c'; // Green for enable
+    }
+ }
+
+enableNotificationsButton.addEventListener('click', () => {
+       if (notificationPermission === 'granted') {
+           // If permission is granted, we revoke it by setting notification permission to default
+          notificationPermission = 'default';
+            updateButtonState();
+           navigator.serviceWorker.ready.then(registration => {
+            registration.pushManager.getSubscription().then(subscription =>{
+                if(subscription){
+                  subscription.unsubscribe().then(()=>{
+                       console.log("Push notification unsubscribed");
+                       updateButtonState();
+                  }).catch(error => console.error('Error unsubscribing', error));
+                }
+            })
+         })
+        } else {
+            requestNotificationPermission();
+        }
+
+});
 
 function sendPushNotification(title, message) {
     if(notificationPermission === 'granted') {
             navigator.serviceWorker.ready.then((registration) => {
                 registration.showNotification(title, {
                     body: message,
-                    icon: '/icon.png',
+                    icon: 'icon.png',
                     vibrate: [200, 100, 200], // Vibrate pattern
                 });
             });
@@ -291,10 +329,26 @@ function sendPushNotification(title, message) {
     }
 
 }
+
 // Function to play alert sound
 function playSound() {
-  alertSound.play();
+    if (audioContext && alertSound) {
+         alertSound.play()
+         .catch(error => {
+               console.error("Audio playback failed:", error);
+          });
+
+       } else {
+          console.error("Audio context or sound not initialized")
+       }
+
 }
+function setupAudioContext() {
+   if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          console.log("Audio context is set")
+        }
+  }
 // Function to display custom alerts
 function displayAlert(message) {
     const alertBox = document.createElement('div');
@@ -337,6 +391,8 @@ const translations = {
         'Avoid windows and outer walls.' : 'Avoid windows and outer walls.',
         'Check for injuries and help others.' : 'Check for injuries and help others.',
          'You are within the affected radius.' : 'You are within the affected radius.',
+         'Enable Push Notifications' : 'Enable Push Notifications',
+         'Disable Push Notifications': 'Disable Push Notifications'
 
 
     },
@@ -358,6 +414,8 @@ const translations = {
         'Avoid windows and outer walls.' : 'መስኮቶችን እና ውጫዊ ግድግዳዎችን ያስወግዱ።',
         'Check for injuries and help others.' : 'ጉዳቶችን ይፈትሹ እና ሌሎችን ያግዙ።',
          'You are within the affected radius.' : 'እርስዎ በተጎዳው ራዲየስ ውስጥ ነዎት።',
+           'Enable Push Notifications' : 'የግፊት ማሳወቂያዎችን አንቃ',
+           'Disable Push Notifications': 'የግፊት ማሳወቂያዎችን አቦዝን'
 
     },
     or: {
@@ -378,6 +436,8 @@ const translations = {
         'Avoid windows and outer walls.' : 'Foddaa fi dallaa alaati irraa fagaadhaa.',
         'Check for injuries and help others.' : 'Miidhaa jiraachuu isaa mirkaneeffadhaa fi warra kaaniif gargaaraa.',
           'You are within the affected radius.' : 'Ati raadiyaasii miidhamaa keessa jirta.',
+           'Enable Push Notifications' : 'Beeksisa Dhiibbaa Aktiveessaa',
+           'Disable Push Notifications': 'Beeksisa Dhiibbaa Dhaamsaa'
 
     },
     ti: {
@@ -398,6 +458,8 @@ const translations = {
         'Avoid windows and outer walls.' : 'መስኮትን ናይ ወጻኢ መንደራትን ተዓቀቡ።',
         'Check for injuries and help others.' : 'ጉድኣት እንተሃልዩ ፈትሹ ንኻልኦት ሓግዙ።',
         'You are within the affected radius.' : 'ኣብ ዉሽጢ ራድዮስ ተጽዕኖ ኣለኻ።',
+           'Enable Push Notifications' : 'ናይ መግፋሕቲ መፍለጢ ኣነቓቕሑ',
+           'Disable Push Notifications': 'ናይ መግፋሕቲ መፍለጢ ኣጥፍእ'
     }
 };
 
@@ -413,6 +475,9 @@ function updateHeadingTranslations() {
     document.querySelector('#previous-earthquake-container h2').textContent = translateText('Previous Earthquakes', currentLanguage);
     document.querySelector('#realtime-earthquake-container h2').textContent = translateText('Realtime Earthquakes', currentLanguage);
     document.querySelector('.safety-instructions h2').textContent = translateText('Safety Instructions', currentLanguage);
+    updateButtonState();
+
+
       document.querySelectorAll('#safety-list li').forEach((li, index) => {
         switch (index){
             case 0:
@@ -441,7 +506,13 @@ document.getElementById('language-dropdown').addEventListener('change', (event) 
 
 // Update heading translations on page load
 updateHeadingTranslations();
+ // Set initial button state
+    navigator.permissions.query({ name: 'notifications' }).then(permissionStatus => {
+        notificationPermission = permissionStatus.state;
+        updateButtonState();
+    });
 
 // Fetch and display data every 30 seconds
 fetchEarthquakeData();
 setInterval(fetchEarthquakeData, 30000);
+setupAudioContext();

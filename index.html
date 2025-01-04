@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethiopia Earthquake Notifier</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+         <i class="fa-solid fa-earth-africa header-icon"></i>
+        <h1>Ethiopia Earthquake Tracker</h1>
+         <div id="language-selector">
+            <select id="language-dropdown">
+                <option value="en">English</option>
+                <option value="am">አማርኛ (Amharic)</option>
+                <option value="or">Oromiffa (Oromo)</option>
+                <option value="ti">ትግርኛ (Tigrinya)</option>
+            </select>
+        </div>
+        </div>
+    </header>
+    <main>
+         <div id="alert-container" class="alert-container"></div>
+      <div id="loading-message" style="display: none;">Loading earthquake data...</div>
+      <button id="enable-notifications-button">Enable Push Notifications</button>
+        <div class="container">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="safety-instructions">
+                    <h2>Safety Instructions</h2>
+                    <ul id="safety-list">
+                        <li>Stay calm and move to a safe location.</li>
+                        <li>Drop, Cover, and Hold on.</li>
+                        <li>Avoid windows and outer walls.</li>
+                        <li>Check for injuries and help others.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="earthquake-lists">
+                <div id="realtime-earthquake-container">
+                    <h2>Realtime Earthquakes</h2>
+                    <ul id="realtime-earthquake-list"></ul>
+                </div>
+                <div id="previous-earthquake-container">
+                    <h2>Previous Earthquakes</h2>
+                    <ul id="earthquake-history"></ul>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p> Made By Perseus </p>
+        <p>© 2024 Ethiopia Earthquake Notifier</p>
+    </footer>
+        <audio id="alert-sound" preload="auto">
+           <source src="alert.mp3" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
