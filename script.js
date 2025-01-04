@@ -9,7 +9,6 @@
   6. Show areas affected by seismic waves.
   7. Localization support for Amharic, Oromo, Tigrinya, and English.
   8. Safety instructions during alerts.
-  9. Separate containers for previous earthquakes and real-time events.
 */
 
 // Ethiopia's geographical boundaries
