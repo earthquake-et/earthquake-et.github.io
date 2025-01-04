@@ -242,9 +242,9 @@ function alertUser(place, magnitude, timeUntilImpact) {
     return;
   }
      isAlertActive = true;
-    const messageEn = `⚠️ ${translateText('Earthquake Alert!',currentLanguage)} ⚠️<br>${translateText('Location',currentLanguage)}: ${place}<br>${translateText('Magnitude',currentLanguage)}: ${magnitude}`;
-    const timeUntilShakingMessage = timeUntilImpact ? `<br>${translateText('Estimated time until shaking',currentLanguage)}: ${timeUntilImpact} ${translateText('seconds',currentLanguage)}.` : '';
-    const fullMessage = `${messageEn}${timeUntilShakingMessage}<br>${translateText('Take immediate precautions!', currentLanguage)}`;
+    const messageEn = `⚠️ ${translateText('Earthquake Alert!',currentLanguage)} ⚠️\n${translateText('Location',currentLanguage)}: ${place}\n${translateText('Magnitude',currentLanguage)}: ${magnitude}`;
+    const timeUntilShakingMessage = timeUntilImpact ? `\n${translateText('Estimated time until shaking',currentLanguage)}: ${timeUntilImpact} ${translateText('seconds',currentLanguage)}.` : '';
+    const fullMessage = `${messageEn}${timeUntilShakingMessage}\n${translateText('Take immediate precautions!', currentLanguage)}`;
   console.log(fullMessage); // For debugging
     displayAlert(fullMessage);
     sendPushNotification(`${translateText('Earthquake Alert!', currentLanguage)}`, fullMessage);
