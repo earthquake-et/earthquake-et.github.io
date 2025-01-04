@@ -28,7 +28,7 @@ const loadingMessage = document.getElementById('loading-message');
 const alertSound = document.getElementById('alert-sound');
 const alertContainer = document.getElementById('alert-container');
 let isAlertActive = false;
-let earthquakeLayerGroup;
+let earthquakeLayerGroup = L.layerGroup(); // Initialize here
 let audioContext;
 const enableNotificationsButton = document.getElementById('enable-notifications-button');
 
@@ -53,7 +53,7 @@ function initMap() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
     }).addTo(map);
-     earthquakeLayerGroup = L.layerGroup().addTo(map);
+     earthquakeLayerGroup.addTo(map);
 }
 
 // Function to get user's real-time location
