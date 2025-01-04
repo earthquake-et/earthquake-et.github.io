@@ -217,10 +217,6 @@ footer {
          margin-bottom: 10px;
     }
 
-  .container {
-    margin-top: 75px;
-  }
-
     .map-container,
     .earthquake-lists {
       width: 100%;
@@ -230,5 +226,5 @@ footer {
     }
 
     #enable-notifications-button {
-    margin-top; 50px;
+    margin-top; 75px;
     }
